@@ -1,26 +1,30 @@
-import asyncio
-import logging
 import os
+import logging
 from aiogram import Bot, Dispatcher
-from aiogram.types import Message, ChatInviteLink
+from aiogram.types import Update, ChatInviteLink
 from aiogram.filters import Command
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from aiohttp import web
 from dotenv import load_dotenv
 from db import setup_db, get_invite, save_invite  # **Yangi db.py faylidan import qilamiz**
 
-# **.env dan TOKEN yuklash**
+# **.env dan TOKEN va BASE_URL yuklash**
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
+BASE_URL = os.getenv("BASE_URL")  # Webhook uchun Render’dan olingan domen
 CHANNEL_ID = -1002447889063
+WEBHOOK_PATH = f"/webhook/{TOKEN}"
+WEBHOOK_URL = f"{BASE_URL}{WEBHOOK_PATH}"
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
 @dp.message(Command("start"))
-async def start_cmd(message: Message):
+async def start_cmd(message):
     await message.answer("👋 Assalomu alaykum!\nTaklif havolasi olish uchun +kurs deb yozing.")
 
 @dp.message()
-async def kurs_handler(message: Message):
+async def kurs_handler(message):
     if message.text.strip().lower() == "+kurs":
         user_id = str(message.from_user.id)
         user_name = message.from_user.first_name
@@ -42,16 +46,31 @@ async def kurs_handler(message: Message):
                 await message.answer("❌ Kechirasiz, taklif havolasini yaratib bo‘lmadi.\nAdmin bilan bog‘laning: @xlertuzb")
                 logging.error(f"Xatolik: {e}")
 
-async def main():
+async def on_startup():
+    """Webhookni o‘rnatish va bazani yaratish"""
     await setup_db()  # **PostgreSQL bazani yaratamiz**
-    await bot.delete_webhook(drop_pending_updates=True)  
-    await dp.start_polling(bot)
+    await bot.set_webhook(WEBHOOK_URL)  # **Telegram API webhook'ni sozlash**
+
+async def on_shutdown():
+    """Webhookni o‘chirish"""
+    await bot.delete_webhook()
+
+async def handle_update(request: web.Request):
+    """Telegram webhook so‘rovlarini qabul qilish"""
+    update = Update.model_validate(await request.json())
+    await dp.feed_update(bot, update)
+    return web.Response()
+
+def main():
+    logging.basicConfig(level=logging.INFO)
+
+    # **AIOHTTP web-serverni yaratamiz**
+    app = web.Application()
+    SimpleRequestHandler(dp, bot).register(app, path=WEBHOOK_PATH)
+    setup_application(app, on_startup=[on_startup], on_shutdown=[on_shutdown])
+
+    # **Webhook serverni ishga tushirish**
+    web.run_app(app, host="0.0.0.0", port=8080)
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    try:
-        asyncio.run(main())  
-    except RuntimeError:  
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(main())
+    main()
