@@ -55,13 +55,20 @@ async def on_shutdown():
     """Webhookni o‘chirish"""
     await bot.delete_webhook()
 
+async def handle_request(request):
+    """Telegram webhook so‘rovlarini qabul qilish"""
+    update = Update(**await request.json())
+    await dp.feed_update(bot, update)
+    return web.Response()
+
 def main():
     logging.basicConfig(level=logging.INFO)
 
     # **AIOHTTP web-serverni yaratamiz**
     app = web.Application()
-    SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
-    setup_application(app, dp, on_startup=[on_startup], on_shutdown=[on_shutdown])  # **DISPATCHER qo‘shildi**
+    app.router.add_post(WEBHOOK_PATH, handle_request)  # Webhookni yo‘lga qo‘yish
+
+    setup_application(app, dp, on_startup=[on_startup], on_shutdown=[on_shutdown])
 
     # **Webhook serverni ishga tushirish**
     web.run_app(app, host="0.0.0.0", port=8080)
