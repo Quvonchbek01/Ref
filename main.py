@@ -1,38 +1,51 @@
 import asyncio
 import logging
-import json
-import os
-from dotenv import load_dotenv
+import sqlite3
 from aiogram import Bot, Dispatcher
 from aiogram.types import Message, ChatInviteLink
 from aiogram.filters import Command  
+from dotenv import load_dotenv
+import os  
 
-# .env fayldan o'zgaruvchilarni yuklaymiz
+# .env dan TOKEN yuklash
 load_dotenv()
-TOKEN = os.getenv("TOKEN")  # TOKENni atrof-muhitdan olamiz
+TOKEN = os.getenv("TOKEN")
 
 CHANNEL_ID = -1002447889063  
 bot = Bot(token=TOKEN)
-
 dp = Dispatcher()
 
-INVITES_FILE = "invites.json"
+DB_FILE = "invites.db"
 
-def load_invites():
-    """ Fayldan taklif havolalarini yuklash """
-    try:
-        with open(INVITES_FILE, "r", encoding="utf-8") as file:
-            return json.load(file)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {}
+# **1. SQL jadvalini yaratish (agar mavjud bo‘lmasa)**
+def setup_db():
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS invites (
+            user_id TEXT PRIMARY KEY,
+            invite_link TEXT NOT NULL
+        )
+    """)
+    conn.commit()
+    conn.close()
 
-def save_invites():
-    """ Taklif havolalarini faylga saqlash """
-    with open(INVITES_FILE, "w", encoding="utf-8") as file:
-        json.dump(user_invites, file, indent=4)
+# **2. Foydalanuvchining taklif havolasi mavjudligini tekshirish**
+async def get_invite(user_id: str):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT invite_link FROM invites WHERE user_id = ?", (user_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return row[0] if row else None
 
-# **❗ MUHIM**: Invites fayldan to‘g‘ri yuklanyapti
-user_invites = load_invites()
+# **3. Yangi taklif havolasini saqlash**
+async def save_invite(user_id: str, invite_link: str):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("INSERT OR REPLACE INTO invites (user_id, invite_link) VALUES (?, ?)", (user_id, invite_link))
+    conn.commit()
+    conn.close()
 
 @dp.message(Command("start"))
 async def start_cmd(message: Message):
@@ -41,32 +54,28 @@ async def start_cmd(message: Message):
 @dp.message()
 async def kurs_handler(message: Message):
     if message.text.strip().lower() == "+kurs":
-        user_id = str(message.from_user.id)  # **ID-ni stringga o‘girish kerak!**
+        user_id = str(message.from_user.id)
         user_name = message.from_user.first_name
 
-        # **❗ TO‘G‘RILANDI**: Avvaldan borligini tekshirish ishlashi kerak
-        if user_id in user_invites and user_invites[user_id]:  
-            await message.answer(f"✅ Sizga allaqachon taklif havolasi berilgan!\n"
-                                 f"🔗 Taklif havolangiz: {user_invites[user_id]}")
+        invite_link = await get_invite(user_id)  # **Bazadan tekshiramiz**
+        if invite_link:
+            await message.answer(f"✅ Sizga allaqachon taklif havolasi berilgan!\n🔗 {invite_link}")
         else:
             try:
-                invite_link: ChatInviteLink = await bot.create_chat_invite_link(
+                new_invite: ChatInviteLink = await bot.create_chat_invite_link(
                     chat_id=CHANNEL_ID,
                     member_limit=6,
                     name=f"{user_name} ref"
                 )
-                user_invites[user_id] = invite_link.invite_link
-                save_invites()  # **❗ FAYLGA SAQLAYMIZ**
+                await save_invite(user_id, new_invite.invite_link)  # **Bazaga saqlaymiz**
 
-                await message.answer(f"🎉 Taklif havolasi yaratildi!\n"
-                                     f"📌 {user_name} ref havolangiz:\n"
-                                     f"🔗 {invite_link.invite_link}")
+                await message.answer(f"🎉 Taklif havolasi yaratildi!\n📌 {user_name} ref:\n🔗 {new_invite.invite_link}")
             except Exception as e:
-                await message.answer("❌ Kechirasiz, taklif havolasini yaratib bo‘lmadi.\n"
-                                     "Admin bilan bog‘laning: @xlertuzb")
+                await message.answer("❌ Kechirasiz, taklif havolasini yaratib bo‘lmadi.\nAdmin bilan bog‘laning: @xlertuzb")
                 logging.error(f"Xatolik: {e}")
 
 async def main():
+    setup_db()  # **Bot ishga tushganda bazani tayyorlaymiz**
     await bot.delete_webhook(drop_pending_updates=True)  
     await dp.start_polling(bot)
 
