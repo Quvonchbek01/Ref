@@ -6,9 +6,9 @@ from aiogram.filters import Command
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
 from dotenv import load_dotenv
-from db import setup_db, get_invite, save_invite  # **Yangi db.py faylidan import qilamiz**
+from db import setup_db, get_invite, save_invite  # Bazaga ulanish
 
-# **.env dan TOKEN va BASE_URL yuklash**
+# **.env faylni yuklash**
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
 BASE_URL = os.getenv("BASE_URL")  # Webhook uchun Render’dan olingan domen
@@ -55,19 +55,13 @@ async def on_shutdown():
     """Webhookni o‘chirish"""
     await bot.delete_webhook()
 
-async def handle_update(request: web.Request):
-    """Telegram webhook so‘rovlarini qabul qilish"""
-    update = Update.model_validate(await request.json())
-    await dp.feed_update(bot, update)
-    return web.Response()
-
 def main():
     logging.basicConfig(level=logging.INFO)
 
     # **AIOHTTP web-serverni yaratamiz**
     app = web.Application()
-    SimpleRequestHandler(dp, bot).register(app, path=WEBHOOK_PATH)
-    setup_application(app, on_startup=[on_startup], on_shutdown=[on_shutdown])
+    SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
+    setup_application(app, dp, on_startup=[on_startup], on_shutdown=[on_shutdown])  # **DISPATCHER qo‘shildi**
 
     # **Webhook serverni ishga tushirish**
     web.run_app(app, host="0.0.0.0", port=8080)
