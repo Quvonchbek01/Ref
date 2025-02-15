@@ -3,7 +3,7 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.types import Update, ChatInviteLink
 from aiogram.filters import Command
-from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from aiogram.webhook.aiohttp_server import setup_application
 from aiohttp import web
 from dotenv import load_dotenv
 from db import setup_db, get_invite, save_invite  # Bazaga ulanish
@@ -61,12 +61,17 @@ async def handle_request(request):
     await dp.feed_update(bot, update)
     return web.Response()
 
+async def handle_ping(request):
+    """UptimeRobot yoki boshqa xizmatlar uchun oddiy GET so‘rovini qo‘llab-quvvatlash"""
+    return web.Response(text="Bot is running!", status=200)
+
 def main():
     logging.basicConfig(level=logging.INFO)
 
     # **AIOHTTP web-serverni yaratamiz**
     app = web.Application()
-    app.router.add_post(WEBHOOK_PATH, handle_request)  # Webhookni yo‘lga qo‘yish
+    app.router.add_post(WEBHOOK_PATH, handle_request)  # Webhook uchun POST so‘rov
+    app.router.add_get("/", handle_ping)  # GET so‘rov uchun, UptimeRobot va brauzer tekshiruvi uchun
 
     setup_application(app, dp, on_startup=[on_startup], on_shutdown=[on_shutdown])
 
