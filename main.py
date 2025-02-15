@@ -11,7 +11,7 @@ from dotenv import load_dotenv  # .env fayldan yuklash uchun
 load_dotenv()
 
 TOKEN = os.getenv("TOKEN")
-CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
+CHANNEL_ID = -1002447889063
 
 bot = Bot(token=TOKEN, parse_mode="HTML")
 dp = Dispatcher()
