@@ -2,23 +2,24 @@ import asyncio
 import logging
 import json
 import os
+from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher
 from aiogram.types import Message, ChatInviteLink
 from aiogram.filters import Command  
-from dotenv import load_dotenv  # .env fayldan yuklash uchun
 
-# .env faylini yuklash
+# .env fayldan o'zgaruvchilarni yuklaymiz
 load_dotenv()
+TOKEN = os.getenv("TOKEN")  # TOKENni atrof-muhitdan olamiz
 
-TOKEN = os.getenv("TOKEN")
-CHANNEL_ID = -1002447889063
-
+CHANNEL_ID = -1002447889063  
 bot = Bot(token=TOKEN)
+
 dp = Dispatcher()
 
 INVITES_FILE = "invites.json"
 
 def load_invites():
+    """ Fayldan taklif havolalarini yuklash """
     try:
         with open(INVITES_FILE, "r", encoding="utf-8") as file:
             return json.load(file)
@@ -26,22 +27,25 @@ def load_invites():
         return {}
 
 def save_invites():
+    """ Taklif havolalarini faylga saqlash """
     with open(INVITES_FILE, "w", encoding="utf-8") as file:
         json.dump(user_invites, file, indent=4)
 
+# **❗ MUHIM**: Invites fayldan to‘g‘ri yuklanyapti
 user_invites = load_invites()
 
 @dp.message(Command("start"))
 async def start_cmd(message: Message):
-    await message.answer("👋 Assalomu alaykum!\nTaklif havolasi olish uchun <b>+kurs</b> deb yozing.")
+    await message.answer("👋 Assalomu alaykum!\nTaklif havolasi olish uchun +kurs deb yozing.")
 
 @dp.message()
 async def kurs_handler(message: Message):
     if message.text.strip().lower() == "+kurs":
-        user_id = str(message.from_user.id)
+        user_id = str(message.from_user.id)  # **ID-ni stringga o‘girish kerak!**
         user_name = message.from_user.first_name
 
-        if user_id in user_invites:
+        # **❗ TO‘G‘RILANDI**: Avvaldan borligini tekshirish ishlashi kerak
+        if user_id in user_invites and user_invites[user_id]:  
             await message.answer(f"✅ Sizga allaqachon taklif havolasi berilgan!\n"
                                  f"🔗 Taklif havolangiz: {user_invites[user_id]}")
         else:
@@ -52,10 +56,10 @@ async def kurs_handler(message: Message):
                     name=f"{user_name} ref"
                 )
                 user_invites[user_id] = invite_link.invite_link
-                save_invites()
+                save_invites()  # **❗ FAYLGA SAQLAYMIZ**
 
                 await message.answer(f"🎉 Taklif havolasi yaratildi!\n"
-                                     f"📌 {user_name} referal havolangiz:\n"
+                                     f"📌 {user_name} ref havolangiz:\n"
                                      f"🔗 {invite_link.invite_link}")
             except Exception as e:
                 await message.answer("❌ Kechirasiz, taklif havolasini yaratib bo‘lmadi.\n"
