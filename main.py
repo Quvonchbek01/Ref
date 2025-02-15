@@ -31,16 +31,16 @@ def setup_db():
     conn.close()
 
 # **2. Foydalanuvchining taklif havolasi mavjudligini tekshirish**
-async def get_invite(user_id: str):
+def get_invite(user_id: str):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute("SELECT invite_link FROM invites WHERE user_id = ?", (user_id,))
     row = cursor.fetchone()
     conn.close()
-    return row[0] if row else None
+    return row[0] if row else None  # **Bazadan havolani qaytarish**
 
 # **3. Yangi taklif havolasini saqlash**
-async def save_invite(user_id: str, invite_link: str):
+def save_invite(user_id: str, invite_link: str):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute("INSERT OR REPLACE INTO invites (user_id, invite_link) VALUES (?, ?)", (user_id, invite_link))
@@ -57,7 +57,7 @@ async def kurs_handler(message: Message):
         user_id = str(message.from_user.id)
         user_name = message.from_user.first_name
 
-        invite_link = await get_invite(user_id)  # **Bazadan tekshiramiz**
+        invite_link = get_invite(user_id)  # **Bazadan havolani tekshiramiz**
         if invite_link:
             await message.answer(f"✅ Sizga allaqachon taklif havolasi berilgan!\n🔗 {invite_link}")
         else:
@@ -67,7 +67,7 @@ async def kurs_handler(message: Message):
                     member_limit=6,
                     name=f"{user_name} ref"
                 )
-                await save_invite(user_id, new_invite.invite_link)  # **Bazaga saqlaymiz**
+                save_invite(user_id, new_invite.invite_link)  # **Bazaga saqlaymiz**
 
                 await message.answer(f"🎉 Taklif havolasi yaratildi!\n📌 {user_name} ref:\n🔗 {new_invite.invite_link}")
             except Exception as e:
