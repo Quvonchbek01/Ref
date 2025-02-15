@@ -13,7 +13,7 @@ load_dotenv()
 TOKEN = os.getenv("TOKEN")
 CHANNEL_ID = -1002447889063
 
-bot = Bot(token=TOKEN, parse_mode="HTML")
+bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
 INVITES_FILE = "invites.json"
@@ -55,7 +55,7 @@ async def kurs_handler(message: Message):
                 save_invites()
 
                 await message.answer(f"🎉 Taklif havolasi yaratildi!\n"
-                                     f"📌 <b>{user_name} ref</b> havolangiz:\n"
+                                     f"📌 {user_name} referal havolangiz:\n"
                                      f"🔗 {invite_link.invite_link}")
             except Exception as e:
                 await message.answer("❌ Kechirasiz, taklif havolasini yaratib bo‘lmadi.\n"
