@@ -20,7 +20,7 @@ async def start_cmd(message):
 
 @dp.message()
 async def kurs_handler(message):
-    if message.text.strip().lower() in ["vaqt", "time"]:
+    if message.text.strip().lower()=="time":
         user_id = str(message.from_user.id)
         user_name = message.from_user.first_name
 
