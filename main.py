@@ -52,8 +52,7 @@ async def on_startup():
     await bot.set_webhook(WEBHOOK_URL)  # **Telegram API webhook'ni sozlash**
 
 async def on_shutdown():
-    """Webhookni o‘chirish"""
-    await bot.delete_webhook()
+     pass
 
 async def handle_request(request):
     """Telegram webhook so‘rovlarini qabul qilish"""
@@ -79,7 +78,7 @@ def main():
     setup_application(app, dp, on_startup=[on_startup], on_shutdown=[on_shutdown])
 
     # **Webhook serverni ishga tushirish**
-    web.run_app(app, host="0.0.0.0", port=10000)
+    web.run_app(app, host="0.0.0.0", port=8080)
 
 if __name__ == "__main__":
     main()
