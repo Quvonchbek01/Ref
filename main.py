@@ -13,7 +13,7 @@ load_dotenv()
 TOKEN = os.getenv("TOKEN")
 CHANNEL_ID = -1002350982567
 BASE_URL = os.getenv("BASE_URL")  # Webhook uchun Render’dan olingan domen
-WEBHOOK_PATH = f"/webhook/{TOKEN}"
+WEBHOOK_PATH = f":8080/webhook/{TOKEN}"
 WEBHOOK_URL = f"{BASE_URL}{WEBHOOK_PATH}"
 
 bot = Bot(token=TOKEN)
