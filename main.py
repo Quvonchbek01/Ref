@@ -73,7 +73,7 @@ def main():
     app = web.Application()
     app.router.add_post(WEBHOOK_PATH, handle_request)  # Webhook uchun POST so‘rov
     app.router.add_get("/", handle_ping)  # GET so‘rov uchun, UptimeRobot va brauzer tekshiruvi uchun
-    web.run_app(app, host="0.0.0.0", port=8080)
+    web.run_app(app, host="0.0.0.0", port=10000)
 
 if __name__ == "__main__":
     main()
