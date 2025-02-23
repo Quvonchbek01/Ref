@@ -5,15 +5,12 @@ from aiogram.types import Update, ChatInviteLink
 from aiogram.filters import Command
 from dotenv import load_dotenv
 from aiohttp import web
-from aiogram.webhook.aiohttp_server import setup_application
+from aiogram import types
 
 # **.env faylni yuklash**
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
-BASE_URL = os.getenv("BASE_URL")  # Render serveringizning URL manzili
 CHANNEL_ID = -1002350982567
-WEBHOOK_PATH = f"/webhook/{TOKEN}"
-WEBHOOK_URL = f"{BASE_URL}{WEBHOOK_PATH}"
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
@@ -53,22 +50,16 @@ async def kurs_handler(message):
                 await message.answer(f"🎉 Congrats!\nYour link has been created.\n📌 {user_name}'s link:\n🔗 {new_invite.invite_link}")
             except Exception as e:
                 # Xatolik yuzaga kelsa, foydalanuvchiga xabar berish
-                await message.answer("❌ Oh, Maybe this is error.\n : Please text me : @xlertuzb")
+                await message.answer("❌ Maybe you are professional hacker (Bruh, it's error)\n : Please text me : @xlertuzb")
                 logging.error(f"Xatolik: {e}")
 
 async def on_startup():
-    """Webhookni o‘rnatish"""
-    await bot.set_webhook(WEBHOOK_URL)  # **Telegram API webhook'ni sozlash**
+    """Botni ishga tushirishdan avval kerakli dasturlarni ishga tushirish"""
+    logging.info("Bot ishga tushirildi")
 
 async def on_shutdown():
-    """Webhookni o‘chirish"""
-    await bot.delete_webhook()
-
-async def handle_request(request):
-    """Telegram webhook so‘rovlarini qabul qilish"""
-    update = Update(**await request.json())
-    await dp.feed_update(bot, update)
-    return web.Response()
+    """Botni o'chirish"""
+    logging.info("Bot o'chirildi")
 
 async def handle_ping(request):
     """UptimeRobot yoki boshqa xizmatlar uchun oddiy GET so‘rovini qo‘llab-quvvatlash"""
@@ -79,13 +70,10 @@ def main():
 
     # **AIOHTTP web-serverni yaratamiz**
     app = web.Application()
-    app.router.add_post(WEBHOOK_PATH, handle_request)  # Webhook uchun POST so‘rov
     app.router.add_get("/", handle_ping)  # GET so‘rov uchun, UptimeRobot va brauzer tekshiruvi uchun
 
-    setup_application(app, dp, on_startup=[on_startup], on_shutdown=[on_shutdown])
-
-    # **Webhook serverni ishga tushirish**
-    web.run_app(app, host="0.0.0.0", port=8080)
+    # **Botni pollingga o'tkazish**
+    dp.start_polling(bot, on_startup=[on_startup], on_shutdown=[on_shutdown])
 
 if __name__ == "__main__":
     main()
