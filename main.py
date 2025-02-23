@@ -78,7 +78,7 @@ def main():
     setup_application(app, dp, on_startup=[on_startup], on_shutdown=[on_shutdown])
 
     # **Webhook serverni ishga tushirish**
-    web.run_app(app, host="0.0.0.0", port=10000)
+    web.run_app(app, host="127.0.0.1", port=8080)
 
 if __name__ == "__main__":
     main()
