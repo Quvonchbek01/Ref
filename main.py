@@ -12,7 +12,7 @@ from db import setup_db, get_invite, save_invite  # Bazaga ulanish
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
 BASE_URL = os.getenv("BASE_URL")  # Webhook uchun Render’dan olingan domen
-CHANNEL_ID = -1002447889063
+CHANNEL_ID = -1002350982567
 WEBHOOK_PATH = f"/webhook/{TOKEN}"
 WEBHOOK_URL = f"{BASE_URL}{WEBHOOK_PATH}"
 
