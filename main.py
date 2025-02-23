@@ -14,7 +14,7 @@ TOKEN = os.getenv("TOKEN")
 CHANNEL_ID = -1002350982567
 BASE_URL = os.getenv("BASE_URL")  # Webhook uchun Render’dan olingan domen
 WEBHOOK_PATH = f"/webhook/{TOKEN}"
-WEBHOOK_URL = f"{BASE_URL}:8080{WEBHOOK_PATH}"
+WEBHOOK_URL = f"{BASE_URL}{WEBHOOK_PATH}"
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
@@ -56,6 +56,7 @@ async def kurs_handler(message):
                 # Xatolik yuzaga kelsa, foydalanuvchiga xabar berish
                 await message.answer("❌ Maybe you are professional hacker (Bruh, it's error)\n : Please text me : @xlertuzb")
                 logging.error(f"Xatolik: {e}")
+
 async def handle_request(request):
     """Webhook orqali so‘rovlarni qabul qilish"""
     update = Update(**await request.json())
@@ -65,16 +66,25 @@ async def handle_request(request):
 async def handle_ping(request):
     """UptimeRobot yoki boshqa xizmatlar uchun oddiy GET so‘rovini qo‘llab-quvvatlash"""
     return web.Response(text="Bot is running!", status=200)
+
 async def on_startup(dp):
     await bot.set_webhook(WEBHOOK_URL)
+
 def main():
     logging.basicConfig(level=logging.INFO)
 
     # **AIOHTTP web-serverni yaratamiz**
     app = web.Application()
-    app.router.add_post(WEBHOOK_PATH, handle_request)  # Webhook uchun POST so‘rov
-    app.router.add_get("/", handle_ping)  # GET so‘rov uchun, UptimeRobot va brauzer tekshiruvi uchun
-    web.run_app(app, host="0.0.0.0", port=8080)
+    setup_application(app, bot)  # Botni AIOHTTP serverga ulaymiz
+
+    # Webhook uchun POST so‘rov
+    app.router.add_post(WEBHOOK_PATH, handle_request)
+    
+    # GET so‘rov uchun, UptimeRobot va brauzer tekshiruvi uchun
+    app.router.add_get("/", handle_ping)
+    
+    # Web serverni ishga tushurish
+    web.run_app(app, host="0.0.0.0", port=443)
 
 if __name__ == "__main__":
     main()
