@@ -19,32 +19,32 @@ WEBHOOK_URL = f"{BASE_URL}{WEBHOOK_PATH}"
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-@dp.message(Command("start"))
+@dp.message(Command("start", "hack"))
 async def start_cmd(message):
-    await message.answer("👋 Assalomu alaykum!\nTaklif havolasi olish uchun +kurs deb yozing.")
+    await message.answer(f"👋 Welcome, {message.from_user.first.name}!\n Solve the following riddle and join Cracking World!\nWhat is something that is both valuable and worthless at the same time?")
 
 @dp.message()
-async def kurs_handler(message):
-    if message.text.strip().lower() == "+kurs":
+async def data_handler(message):
+    if message.text.strip().lower() == "vaqt" or message.text.strip().lower() == "time"
         user_id = str(message.from_user.id)
         user_name = message.from_user.first_name
 
         invite_link = await get_invite(user_id)  # **Bazadan tekshiramiz**
         if invite_link:
-            await message.answer(f"✅ Sizga allaqachon taklif havolasi berilgan!\n🔗 {invite_link}")
+            await message.answer(f"Don't hack ! \nYou have already been given the link.\n🔗 {invite_link}")
         else:
             try:
                 new_invite: ChatInviteLink = await bot.create_chat_invite_link(
                     chat_id=CHANNEL_ID,
-                    member_limit=6,
-                    name=f"{user_name} ref"
+                    member_limit=1,
+                    name=f"{user_name}'s link"
                 )
                 await save_invite(user_id, new_invite.invite_link)  # **Bazaga saqlaymiz**
 
-                await message.answer(f"🎉 Taklif havolasi yaratildi!\n📌 {user_name} ref:\n🔗 {new_invite.invite_link}")
+                await message.answer(f"🎉 Congrats! You got it right.\nLink has been created!\n📌 {user_name} ref:\n🔗 {new_invite.invite_link}")
             except Exception as e:
-                await message.answer("❌ Kechirasiz, taklif havolasini yaratib bo‘lmadi.\nAdmin bilan bog‘laning: @xlertuzb")
-                logging.error(f"Xatolik: {e}")
+                await message.answer("❌ Error.\nPlease text me: @xlertuzb")
+                logging.error(f"Error: {e}")
 
 async def on_startup():
     """Webhookni o‘rnatish va bazani yaratish"""
