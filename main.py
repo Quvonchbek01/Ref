@@ -3,21 +3,23 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.types import Update, ChatInviteLink
 from aiogram.filters import Command
-from aiogram.webhook.aiohttp_server import setup_application
-from aiohttp import web
 from dotenv import load_dotenv
-from db import setup_db, get_invite, save_invite  # Bazaga ulanish
+from aiohttp import web
+from aiogram.webhook.aiohttp_server import setup_application
 
 # **.env faylni yuklash**
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
-BASE_URL = os.getenv("BASE_URL")  # Webhook uchun Render’dan olingan domen
+BASE_URL = os.getenv("BASE_URL")  # Render serveringizning URL manzili
 CHANNEL_ID = -1002350982567
 WEBHOOK_PATH = f"/webhook/{TOKEN}"
 WEBHOOK_URL = f"{BASE_URL}{WEBHOOK_PATH}"
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
+
+# Xotirada saqlanadigan dictionary (foydalanuvchilar va havolalar)
+invites = {}
 
 @dp.message(Command("start", "hack", "crack"))
 async def start_cmd(message):
@@ -29,26 +31,33 @@ async def kurs_handler(message):
         user_id = str(message.from_user.id)
         user_name = message.from_user.first_name
 
-        invite_link = await get_invite(user_id)  # **Bazadan tekshiramiz**
+        # Xotiradagi invites dictdan foydalanuvchining havolasini olish
+        invite_link = invites.get(user_id)
+
         if invite_link:
+            # Agar foydalanuvchi havolasini oldin olgan bo'lsa
             await message.answer(f"✅You have already been given the link!\nLink: 🔗 {invite_link}")
         else:
             try:
+                # Foydalanuvchiga yangi taklif havolasini yaratish
                 new_invite: ChatInviteLink = await bot.create_chat_invite_link(
                     chat_id=CHANNEL_ID,
                     member_limit=1,
                     name=f"{user_name}'s ref"
                 )
-                await save_invite(user_id, new_invite.invite_link)  # **Bazaga saqlaymiz**
 
+                # Yangi havolani xotiraga saqlash
+                invites[user_id] = new_invite.invite_link
+
+                # Foydalanuvchiga taklif havolasini yuborish
                 await message.answer(f"🎉 Congrats!\nYour link has been created.\n📌 {user_name}'s link:\n🔗 {new_invite.invite_link}")
             except Exception as e:
+                # Xatolik yuzaga kelsa, foydalanuvchiga xabar berish
                 await message.answer("❌ Oh, Maybe this is error.\n : Please text me : @xlertuzb")
                 logging.error(f"Xatolik: {e}")
 
 async def on_startup():
-    """Webhookni o‘rnatish va bazani yaratish"""
-    await setup_db()  # **PostgreSQL bazani yaratamiz**
+    """Webhookni o‘rnatish"""
     await bot.set_webhook(WEBHOOK_URL)  # **Telegram API webhook'ni sozlash**
 
 async def on_shutdown():
