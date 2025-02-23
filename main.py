@@ -25,7 +25,7 @@ async def start_cmd(message):
 
 @dp.message()
 async def data_handler(message):
-    if message.text.strip().lower() == "vaqt" or message.text.strip().lower() == "time"
+    if message.text.strip().lower() == "vaqt" or message.text.strip().lower() == "time" :
         user_id = str(message.from_user.id)
         user_name = message.from_user.first_name
 
