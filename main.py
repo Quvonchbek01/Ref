@@ -55,6 +55,4 @@ async def on_startup():
     logging.basicConfig(level=logging.INFO)
 
 if __name__ == "__main__":
-    from aiogram import executor
-    # Pollingni ishga tushurish
     executor.start_polling(dp, on_startup=on_startup)
