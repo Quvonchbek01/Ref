@@ -1,3 +1,4 @@
+import asyncio
 import os
 import logging
 from aiogram import Bot, Dispatcher
@@ -64,7 +65,7 @@ def main():
     app.router.add_get("/", handle_ping)  # GET so‘rov uchun, UptimeRobot va brauzer tekshiruvi uchun
 
     # **Botni pollingga o'tkazish**
-    await dp.start_polling(bot)
+    asyncio.run(dp.start_polling(bot))
 
 if __name__ == "__main__":
     main()
