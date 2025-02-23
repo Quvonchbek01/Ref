@@ -57,10 +57,13 @@ async def on_shutdown():
 
 async def handle_request(request):
     """Telegram webhook so‘rovlarini qabul qilish"""
-    update = Update(**await request.json())
-    await dp.feed_update(bot, update)
-    return web.Response()
-
+    try:
+        update = Update(**await request.json())
+        await dp.feed_update(bot, update)
+        return web.Response()
+    except Exception as e:
+        logging.error(f"Error handling request: {e}")
+        return web.Response(status=500)
 async def handle_ping(request):
     """UptimeRobot yoki boshqa xizmatlar uchun oddiy GET so‘rovini qo‘llab-quvvatlash"""
     return web.Response(text="Bot is running!", status=200)
