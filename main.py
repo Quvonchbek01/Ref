@@ -5,7 +5,6 @@ from aiogram.types import Update, ChatInviteLink
 from aiogram.filters import Command
 from dotenv import load_dotenv
 from db import setup_db, get_invite, save_invite  # Bazaga ulanish
-from aiogram import executor
 
 # **.env faylni yuklash**
 load_dotenv()
@@ -49,10 +48,14 @@ async def on_startup():
 
 async def on_shutdown():
     pass
-
-# Pollingni ishlatish
-async def on_startup():
-    logging.basicConfig(level=logging.INFO)
+async def on_start():
+    while True:  # Pollingni cheksiz davom ettirish
+        try:
+            await dp.start_polling(bot)
+        except Exception as e:
+            logging.error(f"Error occurred: {e}")
+            await asyncio.sleep(5)  # Xato yuzaga kelganda kutib turing va qayta urinish
 
 if __name__ == "__main__":
-    executor.start_polling(dp, on_startup=on_startup)
+    asyncio.run(on_start())
+
