@@ -65,7 +65,8 @@ async def handle_request(request):
 async def handle_ping(request):
     """UptimeRobot yoki boshqa xizmatlar uchun oddiy GET so‘rovini qo‘llab-quvvatlash"""
     return web.Response(text="Bot is running!", status=200)
-await bot.set_webhook(WEBHOOK_URL)
+async def on_startup(dp):
+    await bot.set_webhook(WEBHOOK_URL)
 def main():
     logging.basicConfig(level=logging.INFO)
 
