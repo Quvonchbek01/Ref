@@ -1,4 +1,3 @@
-import asyncio
 import os
 import logging
 from aiogram import Bot, Dispatcher
@@ -6,12 +5,16 @@ from aiogram.types import Update, ChatInviteLink
 from aiogram.filters import Command
 from dotenv import load_dotenv
 from aiohttp import web
-from aiogram import types
+from aiogram.webhook.aiohttp_server import setup_application
+import asyncio
 
 # **.env faylni yuklash**
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
 CHANNEL_ID = -1002350982567
+BASE_URL = os.getenv("BASE_URL")  # Webhook uchun Render’dan olingan domen
+WEBHOOK_PATH = f"/webhook/{TOKEN}"
+WEBHOOK_URL = f"{BASE_URL}{WEBHOOK_PATH}"
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
@@ -34,7 +37,7 @@ async def kurs_handler(message):
 
         if invite_link:
             # Agar foydalanuvchi havolasini oldin olgan bo'lsa
-            await message.answer(f"✅You have already been given the link!\nLink: 🔗 {invite_link}")
+            await message.answer(f"✅ You have already been given the link!\n🔗Link: {invite_link}")
         else:
             try:
                 # Foydalanuvchiga yangi taklif havolasini yaratish
@@ -53,6 +56,23 @@ async def kurs_handler(message):
                 # Xatolik yuzaga kelsa, foydalanuvchiga xabar berish
                 await message.answer("❌ Maybe you are professional hacker (Bruh, it's error)\n : Please text me : @xlertuzb")
                 logging.error(f"Xatolik: {e}")
+
+async def on_startup():
+    """Webhookni o‘rnatish"""
+    logging.info("Bot ishga tushirildi")
+    await bot.set_webhook(WEBHOOK_URL)
+
+async def on_shutdown():
+    """Webhookni o‘chirish"""
+    logging.info("Bot o'chirildi")
+    await bot.delete_webhook()
+
+async def handle_request(request):
+    """Webhook orqali so‘rovlarni qabul qilish"""
+    update = Update(**await request.json())
+    await dp.feed_update(bot, update)
+    return web.Response()
+
 async def handle_ping(request):
     """UptimeRobot yoki boshqa xizmatlar uchun oddiy GET so‘rovini qo‘llab-quvvatlash"""
     return web.Response(text="Bot is running!", status=200)
@@ -62,10 +82,13 @@ def main():
 
     # **AIOHTTP web-serverni yaratamiz**
     app = web.Application()
+    app.router.add_post(WEBHOOK_PATH, handle_request)  # Webhook uchun POST so‘rov
     app.router.add_get("/", handle_ping)  # GET so‘rov uchun, UptimeRobot va brauzer tekshiruvi uchun
 
-    # **Botni pollingga o'tkazish**
-    asyncio.run(dp.start_polling(bot))
+    setup_application(app, dp, on_startup=[on_startup], on_shutdown=[on_shutdown])
+
+    # **Webhook serverni ishga tushirish**
+    web.run_app(app, host="0.0.0.0", port=8080)
 
 if __name__ == "__main__":
     main()
