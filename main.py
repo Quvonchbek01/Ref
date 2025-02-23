@@ -20,11 +20,11 @@ bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
 @dp.message(Command("start", "hack"))
-async def start_cmd(message: Message):
+async def start_cmd(message):
     await message.answer(f"👋 Welcome, {message.from_user.first_name}!\n Solve the following riddle and join Cracking World!\nWhat is something that is both valuable and worthless at the same time?")
 
 @dp.message()
-async def kurs_handler(message: Message):
+async def kurs_handler(message):
     if message.text.strip().lower() == ["vaqt", "time"] :
         user_id = str(message.from_user.id)
         user_name = message.from_user.first_name
