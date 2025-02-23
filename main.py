@@ -56,17 +56,6 @@ async def kurs_handler(message):
                 # Xatolik yuzaga kelsa, foydalanuvchiga xabar berish
                 await message.answer("❌ Maybe you are professional hacker (Bruh, it's error)\n : Please text me : @xlertuzb")
                 logging.error(f"Xatolik: {e}")
-
-async def on_startup():
-    """Webhookni o‘rnatish"""
-    logging.info("Bot ishga tushirildi")
-    await bot.set_webhook(WEBHOOK_URL)
-
-async def on_shutdown():
-    """Webhookni o‘chirish"""
-    logging.info("Bot o'chirildi")
-    await bot.delete_webhook()
-
 async def handle_request(request):
     """Webhook orqali so‘rovlarni qabul qilish"""
     update = Update(**await request.json())
@@ -84,10 +73,6 @@ def main():
     app = web.Application()
     app.router.add_post(WEBHOOK_PATH, handle_request)  # Webhook uchun POST so‘rov
     app.router.add_get("/", handle_ping)  # GET so‘rov uchun, UptimeRobot va brauzer tekshiruvi uchun
-
-    setup_application(app, dp, on_startup=[on_startup], on_shutdown=[on_shutdown])
-
-    # **Webhook serverni ishga tushirish**
     web.run_app(app, host="0.0.0.0", port=8080)
 
 if __name__ == "__main__":
