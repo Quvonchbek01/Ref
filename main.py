@@ -1,16 +1,13 @@
-import asyncio
 import os
-import logging
 from aiogram import Bot, Dispatcher
-from aiogram.types import Update, ChatInviteLink
+from aiogram.types import ChatInviteLink
 from aiogram.filters import Command
 from dotenv import load_dotenv
-from db import setup_db, get_invite, save_invite  # Bazaga ulanish
+from db import get_invite, save_invite  # Bazaga ulanish
 
-# **.env faylni yuklash**
+# .env faylni yuklash
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
-BASE_URL = os.getenv("BASE_URL")  # Webhook uchun Render’dan olingan domen
 CHANNEL_ID = -1002350982567
 
 bot = Bot(token=TOKEN)
@@ -22,11 +19,11 @@ async def start_cmd(message):
 
 @dp.message()
 async def kurs_handler(message):
-    if message.text.strip().lower() in ["vaqt", "time"] :
+    if message.text.strip().lower() in ["vaqt", "time"]:
         user_id = str(message.from_user.id)
         user_name = message.from_user.first_name
 
-        invite_link = await get_invite(user_id)  # **Bazadan tekshiramiz**
+        invite_link = await get_invite(user_id)  # Bazadan tekshiramiz
         if invite_link:
             await message.answer(f"Don't hack! \nYou have already been given the link.\n🔗 {invite_link}")
         else:
@@ -36,27 +33,17 @@ async def kurs_handler(message):
                     member_limit=1,
                     name=f"{user_name}'s link"
                 )
-                await save_invite(user_id, new_invite.invite_link)  # **Bazaga saqlaymiz**
-
+                await save_invite(user_id, new_invite.invite_link)  # Bazaga saqlaymiz
                 await message.answer(f"🎉 Congrats! You got it right.\nLink has been created!\n📌 {user_name} ref:\n🔗 {new_invite.invite_link}")
-            except Exception as e:
+            except Exception:
                 await message.answer("❌ Error.\nPlease text me: @xlertuzb")
-                logging.error(f"Error: {e}")
 
-async def on_startup():
-    """Botni ishga tushirish va bazani yaratish"""
-    await setup_db()  # **PostgreSQL bazani yaratamiz**
-
-async def on_shutdown():
-    pass
 async def on_start():
     while True:  # Pollingni cheksiz davom ettirish
         try:
             await dp.start_polling(bot)
-        except Exception as e:
-            logging.error(f"Error occurred: {e}")
+        except Exception:
             await asyncio.sleep(5)  # Xato yuzaga kelganda kutib turing va qayta urinish
 
 if __name__ == "__main__":
     asyncio.run(on_start())
-
