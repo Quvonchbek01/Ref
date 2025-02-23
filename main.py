@@ -52,15 +52,6 @@ async def kurs_handler(message):
                 # Xatolik yuzaga kelsa, foydalanuvchiga xabar berish
                 await message.answer("❌ Maybe you are professional hacker (Bruh, it's error)\n : Please text me : @xlertuzb")
                 logging.error(f"Xatolik: {e}")
-
-async def on_startup():
-    """Botni ishga tushirishdan avval kerakli dasturlarni ishga tushirish"""
-    logging.info("Bot ishga tushirildi")
-
-async def on_shutdown():
-    """Botni o'chirish"""
-    logging.info("Bot o'chirildi")
-
 async def handle_ping(request):
     """UptimeRobot yoki boshqa xizmatlar uchun oddiy GET so‘rovini qo‘llab-quvvatlash"""
     return web.Response(text="Bot is running!", status=200)
@@ -73,7 +64,7 @@ def main():
     app.router.add_get("/", handle_ping)  # GET so‘rov uchun, UptimeRobot va brauzer tekshiruvi uchun
 
     # **Botni pollingga o'tkazish**
-    dp.start_polling(bot, on_startup=[on_startup], on_shutdown=[on_shutdown])
+    await dp.start_polling(bot)
 
 if __name__ == "__main__":
     main()
